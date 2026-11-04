@@ -10,7 +10,7 @@
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-11-04 | Initial orientation guide |
-| 1.1 | 2026-11-04 | Added the glossary (Section 8), the "If you are the Approver" section (Section 7), and Git rows in Section 5; rewrote the first-week exercise step by step (Section 9) |
+| 1.1 | 2026-11-04 | Added the glossary (Section 8), the "If you are the Approver" section (Section 7), and Git rows in Section 5; rewrote the first-week exercise step by step (Section 9); added the "start a new application" row in Section 5 |
 
 > **CONFIDENTIAL — Deltra Systems LLC. Internal engineering reference.**
 
@@ -68,7 +68,8 @@ Workflow: Change Management Standard 134. Gates: 134A. Evidence package: 134B. G
 | Question | Look in |
 |---|---|
 | What does this application have to do? | The application's SRS, `docs/requirements/` |
-| How do I start, and which commands do I run? | The application's `CLAUDE.md`; the template's `README.md` |
+| How do I start a new application? | Stack 3; the template's `README.md`, "Start a new application" |
+| How do I start work on an existing application, and which commands do I run? | The application's `CLAUDE.md`; the template's `README.md` |
 | How do I use Git day to day: branches, commits, pushes, merges? | Change Management Standard 134C |
 | How do I name a branch or write a commit message? | Change Management Standard 15, 19–20 |
 | Where does a new file or folder go? | Stack 6 |
