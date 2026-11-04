@@ -792,9 +792,9 @@ Review establishes shared quality control, not elimination of author accountabil
 
 Deltra should generally use a merge approach that preserves understandable repository history.
 
-For short-lived feature branches, **squash merge** may be preferred where it produces a cleaner logical history.
+Deltra web applications shall use **squash merge** for every Pull Request into `main`. Each Pull Request therefore becomes one commit on `main`, whose message describes the change and cites the requirement IDs it serves. The repository shall be configured to allow only squash merging.
 
-A project may use regular merge commits or rebasing when technically justified.
+Other repositories may use regular merge commits or rebasing when technically justified and recorded in an ADR.
 
 Consistency within a project is more important than personal preference.
 
@@ -2075,6 +2075,29 @@ Agents shall batch questions for the Acceptance Gate rather than interrupt the A
 
 Promotion to production requires that no decision within the released scope remain Assumed or Open.
 
+## Approver checklist for each gate
+
+**Requirements Gate**
+
+- *Receive:* the draft SRS, including its open decisions and development defaults (SRS Section 10) and its milestone plan (SRS Section 11).
+- *Check:* the scope (SRS Section 1.4) is what the business needs; the Confirmed and Recommended requirements read correctly; each Open decision has a development default you can accept for now; the decisions marked "Before production" are the ones that truly must be settled before go-live; each milestone can be tested in one sitting.
+- *Decide:* approve the SRS, or return it with changes.
+- *Record:* the approval row of the SRS (SRS Section 13), committed with the SRS to `docs/requirements/`.
+
+**Acceptance Gate**
+
+- *Receive:* the milestone's evidence package, `docs/evidence/<milestone>/evidence.md`, and its `reviews/` folder (Section 134B).
+- *Check:* continuous integration passed on the milestone's final commit; every Reviewer Agent verdict is PASS or PASS WITH FINDINGS, and every High and Medium finding is resolved or recorded under Section 43; the traceability matrix shows a test for each requirement; you have performed each Approver test yourself, following its instructions; you have read each Assumed decision and the agent's recommendation.
+- *Decide:* each Assumed decision is Ratified, Changed, or Rejected; the milestone is Accepted, Accepted with rework, or Rejected.
+- *Record:* the "Approver decision" section of the evidence package; the new status of each decision in the decision log; each rework item as a new work item. Changed decisions are folded into the next SRS version.
+
+**Release Gate**
+
+- *Receive:* the release evidence: release notes, the release candidate's version and checksum, the deployment runbook, the rollback or recovery plan, and any migration scripts you will run (Section 134B).
+- *Check:* every milestone in the release has been accepted; no decision in the released scope is Assumed or Open; the deployment preconditions of Sections 82 and 136 are met; a verified backup exists; you can follow the runbook on your own.
+- *Decide:* approve the release, or hold it.
+- *Record:* the release approval in the evidence package; the release tag on the approved commit of `main` (Section 68); after deployment, the deployment record (Section 83).
+
 # 134B. Evidence Package
 
 At each milestone, agents shall assemble an evidence package that allows the Approver to accept the work without reading every line of code.
@@ -2096,6 +2119,65 @@ The evidence package shall contain:
 For the Release Gate, the evidence package shall also include the deployment runbook, the rollback or recovery plan, and any migration scripts the Approver will run.
 
 The evidence package shall be stored in the repository or release record and retained under Section 127.
+
+# 134C. Daily Git Workflow
+
+This section is the day-to-day procedure for Git in a Deltra web application. It applies the rules of Sections 11–25, 47, 48, 68, and 95, and it applies equally to human developers and to the Builder Agent.
+
+## The same workflow in development and production
+
+Branches are used from the first day of development, not only after an application reaches production. Because `main` always holds release-ready code (Section 12), every change enters it the same way at every stage. Production adds release tags and hotfix branches; it does not change the workflow.
+
+| | Development stage | Production stage |
+|---|---|---|
+| Where work is done | Short-lived branches (Section 13) | The same |
+| How work reaches `main` | Pull Request, passing gates, and Reviewer Agent sign-off (Section 48) | The same |
+| Direct commits to `main` | Only the initial commit that creates the repository (Section 16) | Only in a documented emergency (Section 16) |
+| Release tags | None, or release candidates for acceptance testing | Created by the Approver on the commit approved at the Release Gate (Section 68) |
+| Urgent production fixes | Not applicable | A `hotfix/` branch from `main`, reviewed as far as the emergency permits (Section 95), then released as a patch version |
+
+There are no long-lived development or production branches. `main` and its release tags are sufficient.
+
+## Starting a repository
+
+1. The initial commit goes directly to `main`: the renamed template, the `docs/standards/` submodule, and the approved SRS. It is pushed to GitHub.
+2. Branch protection is enabled immediately afterwards (Section 111): Pull Requests required, the continuous integration check required, force pushes and branch deletion blocked, and squash merging only (Section 47). From then on, nobody pushes to `main`.
+
+## Working on a change
+
+1. **One branch per work item.** Start from the latest `main`, and name the branch by its purpose (Section 15). A branch lives hours to a few days (Section 14); a milestone is made of many branches.
+2. **Commit each logical step when it works** (Section 18), with a meaningful imperative message (Sections 19–20). Keep unrelated changes in separate commits (Section 21). In active work this is typically several commits a day.
+3. **Review before staging.** Check `git status` and `git diff`, and stage specific files rather than everything, so that no secret or generated file is committed by accident (Sections 22 and 24).
+4. **Push the branch at least once per work session**, and whenever it is ready for review. Pushing is the off-machine backup, and it runs continuous integration. Never push to `main`.
+5. **Merge only through the Pull Request on GitHub**, after the preconditions of Section 48 are met, using squash merge (Section 47). Never merge locally into `main` and push.
+6. **After the merge**, update the local `main` and delete the finished branch.
+
+## The command cycle
+
+```text
+git switch main && git pull                  # start from the latest approved code
+git switch -c feature/<short-description>    # one branch per work item (Section 15)
+
+git status                                   # repeat while working:
+git diff                                     #   review the changes,
+git add <files>                              #   stage specific files,
+git commit -m "<imperative description>"     #   commit one logical step
+
+git push -u origin feature/<short-description>   # back up; continuous integration runs
+gh pr create                                     # open the Pull Request
+#   continuous integration passes, Reviewer Agents sign off, squash merge on GitHub
+git switch main && git pull                      # bring the merged result down
+git branch -d feature/<short-description>        # delete the finished branch
+```
+
+Cloning an existing application includes its governing documents: `git clone --recurse-submodules <url>`.
+
+## Git actions reserved to the Approver
+
+- the initial commit and enabling branch protection;
+- release tags (Section 68);
+- moving the pinned version of `docs/standards/` (Section 44); and
+- any exception to this section, recorded in an ADR.
 
 # 135. Minimum Pull Request Checklist
 
@@ -2246,4 +2328,4 @@ The governing source-control and change-management principle of Deltra Software 
 | Version | Date            | Status | Description                                                                 |
 |---------|-----------------|--------|-----------------------------------------------------------------------------|
 | 1.0     | August 19, 2026 | Draft  | Initial Deltra Source Control, Code Review, and Change Management Standard. |
-| 1.1     | November 3, 2026 | Draft | Replaced Section 39 (Founding-Team Exception) with Single-Approver Operation and its compensating controls. Added a Single-Approver column to Section 44. Added the Single-Approver workflow to Section 134 and new Sections 134A (Milestone Gates) and 134B (Evidence Package). Updated Sections 2, 30, 35, 37, 48, 59, 60, 82, 110, 128, 133, 136, and 138 for AI agents and the Approver role. Assigned the vacant Engineering Technical Lead responsibilities to the Approver. Removed drafting commentary following the document history. Revised before approval on 2026-11-04: one finding vocabulary for human and agent review, High, Medium, and Low with a PASS, PASS WITH FINDINGS, or FAIL verdict (Sections 42 and 43); several Reviewer Agents and a definition of sign-off (Sections 35, 37, 39, 44, 48, 128, 134, 134B); `docs/standards/` changes made Critical (Section 44). |
+| 1.1     | November 3, 2026 | Draft | Replaced Section 39 (Founding-Team Exception) with Single-Approver Operation and its compensating controls. Added a Single-Approver column to Section 44. Added the Single-Approver workflow to Section 134 and new Sections 134A (Milestone Gates) and 134B (Evidence Package). Updated Sections 2, 30, 35, 37, 48, 59, 60, 82, 110, 128, 133, 136, and 138 for AI agents and the Approver role. Assigned the vacant Engineering Technical Lead responsibilities to the Approver. Removed drafting commentary following the document history. Revised before approval on 2026-11-04: one finding vocabulary for human and agent review, High, Medium, and Low with a PASS, PASS WITH FINDINGS, or FAIL verdict (Sections 42 and 43); several Reviewer Agents and a definition of sign-off (Sections 35, 37, 39, 44, 48, 128, 134, 134B); `docs/standards/` changes made Critical (Section 44); squash merge made the standard merge method (Section 47); Approver checklists added for each gate (Section 134A); new Section 134C, Daily Git Workflow. |
