@@ -25,7 +25,7 @@
 | 1.6 | 2026-10-23 | Clarify the distinction between verified tool integration and cross-project standards; retain setup details in dedicated guidance | Pending |
 | 1.7 | 2026-11-02 | Remove project-specific adoption section and named project instruction-file references; permit either OpenAI Codex or Claude Code; generalize deployment and database qualifications; approved for release | Approved by Jesse Garcia, CEO, 2026-11-02 |
 | 1.8 | 2026-11-03 | Standardize on Claude Code as the sole AI engineering agent (draft; superseded by 2.0 before approval) | Not submitted |
-| 2.0 | 2026-11-03 | Full rewrite for the AI software factory. Replaces preferences and options with decisions; adds project layout, architecture, frontend, database, security, configuration, logging, testing, quality gates, build, deployment, environments, and agent-repository requirements; separates the mandatory baseline for new applications (Part A) from the adoption policy for existing applications (Part B); lists standard decisions for Approver confirmation (Appendix A). Revised before approval: all SQL consolidated in `db/` (bootstrap, migrations, queries, scripts) with database documentation in `docs/database/`; single `docs/` tree with the runbook moved to `docs/operations/`; `deploy/` limited to installed files; README required in each top-level directory; synthetic data generator moved to `cmd/synthdata`; Go code confined to `cmd/` and `internal/`. Removed agent session capture (Entire), which was optional in Version 1.7, from the standard. Further revised before approval: added `docs/standards/` for read-only copies of the governing documents (Sections 6 and 19, document record); replaced the single `reviewer.md` with one or more Reviewer Agent definitions named by the application's SRS, and required `CLAUDE.md` to point to Section 6 for the layout, listing only the application's own additions, and to give reviewer instructions (Sections 6 and 18); added a `reviews/` folder to each milestone's evidence package and a file name for each reviewer report (Sections 6 and 18); required sign-off from each Reviewer Agent a change requires (Section 17). Revised again before approval with Approver decisions of 2026-11-04 (Appendix A, SD-11 to SD-17): `docs/standards/` is a Git submodule of `deltra-standards` rather than copies (Sections 6, 13.2, 19); the application shell follows the Software Architecture Document — Web Application Shell, with htmx history caching off, active navigation marked by JavaScript, and the sidebar preference kept in browser storage (Section 8); the shell script is a classic script, other scripts ES modules (Section 8); Alpine.js may be permitted only by ADR, in its CSP build (Section 8); every SRS follows the standard section structure (Section 19); Reviewer Agents are application-neutral, read-only, use a different Claude model from the Builder Agent, and report High, Medium, and Low findings with a PASS, PASS WITH FINDINGS, or FAIL verdict (Section 18) | Pending |
+| 2.0 | 2026-11-03 | Full rewrite for the AI software factory. Replaces preferences and options with decisions; adds project layout, architecture, frontend, database, security, configuration, logging, testing, quality gates, build, deployment, environments, and agent-repository requirements; separates the mandatory baseline for new applications (Part A) from the adoption policy for existing applications (Part B); lists standard decisions for Approver confirmation (Appendix A). Revised before approval: all SQL consolidated in `db/` (bootstrap, migrations, queries, scripts) with database documentation in `docs/database/`; single `docs/` tree with the runbook moved to `docs/operations/`; `deploy/` limited to installed files; README required in each top-level directory; synthetic data generator moved to `cmd/synthdata`; Go code confined to `cmd/` and `internal/`. Removed agent session capture (Entire), which was optional in Version 1.7, from the standard. Further revised before approval: added `docs/standards/` for read-only copies of the governing documents (Sections 6 and 19, document record); replaced the single `reviewer.md` with one or more Reviewer Agent definitions named by the application's SRS, and required `CLAUDE.md` to point to Section 6 for the layout, listing only the application's own additions, and to give reviewer instructions (Sections 6 and 18); added a `reviews/` folder to each milestone's evidence package and a file name for each reviewer report (Sections 6 and 18); required sign-off from each Reviewer Agent a change requires (Section 17). Revised again before approval with Approver decisions of 2026-11-04 (Appendix A, SD-11 to SD-17): `docs/standards/` is a Git submodule of `deltra-standards` rather than copies (Sections 6, 13.2, 19); the application shell follows the Software Architecture Document — Web Application Shell, with htmx history caching off, active navigation marked by JavaScript, and the sidebar preference kept in browser storage (Section 8); the shell script is a classic script, other scripts ES modules (Section 8); Alpine.js may be permitted only by ADR, in its CSP build (Section 8); every SRS follows the standard section structure (Section 19); the Section 6 tree is complete and is the single description of the layout (Section 6); Reviewer Agents are application-neutral, read-only, use a different Claude model from the Builder Agent, and report High, Medium, and Low findings with a PASS, PASS WITH FINDINGS, or FAIL verdict (Section 18) | Pending |
 
 > **CONFIDENTIAL — Deltra Systems LLC. Internal engineering reference.**
 
@@ -91,66 +91,86 @@ Dependencies are pinned through `go.mod` and `go.sum`. Vendored frontend files a
 
 ## 6. Project layout
 
-Every new application shall use this layout:
+Every new application shall use this layout. This tree is the single description of the layout: `CLAUDE.md` and the folder READMEs point here rather than repeat it. Names in angle brackets, such as `<app>`, are replaced for each application.
 
 ```text
 <app>/
 ├── README.md                      Purpose, local build and run, links to docs/
 ├── CLAUDE.md                      Agent instructions (Section 18)
 ├── Makefile                       Single source of build, test, and check commands
-├── go.mod / go.sum                Go module definition
+├── go.mod / go.sum                Go module definition and pinned dependencies
 ├── sqlc.yaml                      sqlc configuration
 ├── .golangci.yml                  Lint configuration
+├── .gitignore                     Files Git never records: build output, local secrets
+├── .github/
+│   └── workflows/
+│       └── check.yml              Continuous integration: runs make check (Section 13.2)
 ├── .claude/
 │   ├── settings.json              Agent permission rules
-│   └── agents/
-│       └── *.md                   Reviewer Agent definitions (Section 18)
+│   └── agents/                    Reviewer Agent definitions (Section 18):
+│       ├── srs-reviewer.md
+│       ├── security-reviewer.md
+│       ├── db-safety-reviewer.md
+│       └── doc-consistency-reviewer.md
 │
 ├── cmd/                           GO CODE: entry points
+│   ├── README.md
 │   ├── <app>/
 │   │   └── main.go                Application; subcommands: serve, migrate, version
 │   └── synthdata/
 │       └── main.go                Synthetic data generator (never deployed)
 ├── internal/                      GO CODE: application packages
+│   ├── README.md
 │   ├── config/                    Configuration loading and validation
+│   ├── database/                  Connections as the application role; migrations
 │   ├── dbgen/                     Code generated by sqlc from db/queries (do not edit)
-│   ├── web/                       Router, handlers, middleware, template rendering
-│   ├── auth/                      Sessions, sign-in, authorization checks
+│   ├── auth/                      Entra ID sign-in, sessions, roles
 │   ├── audit/                     Audit event recording
+│   ├── requestid/                 Request identifiers for logs, audit events, and error pages
+│   ├── web/                       Router, handlers, middleware, template rendering
 │   ├── synth/                     Synthetic data definitions used by cmd/synthdata and tests
+│   ├── testdb/                    Disposable test databases, built like production
+│   ├── items/                     The template's example domain; replaced by the application's own
 │   └── <domain>/                  One package per business area (e.g., procurement)
 │
 ├── db/                            ALL SQL
 │   ├── README.md
-│   ├── embed.go                   Embeds migrations into the binary
-│   ├── bootstrap/                 Creates the database and roles; run once per server
-│   ├── migrations/                Numbered schema changes (goose)
-│   ├── queries/                   Application queries (compiled by sqlc)
-│   └── scripts/                   Operational SQL: backup checks, maintenance
-├── web/                           USER INTERFACE FILES
+│   ├── embed.go                   Embeds migrations and bootstrap scripts into the binary
+│   ├── bootstrap/                 Creates the database and roles; run once per server (Section 9.3)
+│   ├── migrations/                Numbered schema changes (goose) (Section 9.4)
+│   ├── queries/                   Application queries, compiled by sqlc (Section 9.5)
+│   └── scripts/                   Operational SQL: backup checks, maintenance (Section 9.6)
+├── web/                           USER INTERFACE FILES (Section 8)
 │   ├── README.md
 │   ├── embed.go                   Embeds templates and static files into the binary
-│   ├── templates/                 html/template files (layouts, pages, partials)
+│   ├── templates/
+│   │   ├── layout.html            The page shell, defined once
+│   │   ├── partials/              Fragments shared by pages: navigation, icons, pagination
+│   │   └── pages/                 One template per page
 │   └── static/
-│       ├── css/
-│       ├── js/
-│       └── vendor/                htmx-2.0.x.min.js
+│       ├── css/                   style.css, the single stylesheet
+│       ├── js/                    spa-shell.js and any page-specific modules
+│       └── vendor/                htmx-2.0.x.min.js, version in the file name
 ├── deploy/                        DEPLOYED CONFIGURATION ONLY
 │   ├── README.md
 │   ├── <app>.service              systemd unit
+│   ├── <app>.env.example          Non-secret configuration, installed as /etc/<app>/<app>.env
 │   └── nginx-<app>.conf           Nginx site template
 │
 └── docs/                          ALL DOCUMENTATION
-    ├── requirements/              Approved SRS
+    ├── requirements/              The approved SRS, one file (Section 19)
     ├── standards/                 Git submodule: deltra-standards at the version in force
-    ├── database/                  Data dictionary and schema diagram
+    ├── database/
+    │   └── data-dictionary.md     Data dictionary (Section 9.6)
     ├── operations/
     │   └── runbook.md             Deployment, rollback, backup, and restore
     ├── adr/                       Architecture Decision Records
     ├── decisions/
     │   └── decision-log.md        Agent decision log (AI Policy 26A.4)
-    ├── evidence/                  Milestone evidence packages, one folder per milestone
+    ├── evidence/                  Milestone evidence packages
+    │   ├── TEMPLATE.md            The evidence package template
     │   └── <milestone>/
+    │       ├── evidence.md        The milestone's evidence package
     │       └── reviews/           Reviewer Agent reports
     └── user-guide.md
 ```

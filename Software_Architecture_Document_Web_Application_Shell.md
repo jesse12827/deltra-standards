@@ -16,7 +16,7 @@
 | Version | Date | Change |
 |---|---|---|
 | 1.x | 2026-11-03 | *Software Architecture Document for SPA Template*: a static prototype of the shell (seven complete HTML documents, `style.css`, `spa-shell.js`, htmx 2.0.10) that required no back end |
-| 2.0 | 2026-11-04 | Retitled and rewritten for the shell as built into the reference template, rendered once by Go templates. Active navigation by the longest-prefix rule, replacing file-name prefixes and `data-section`; htmx configuration moved to one `htmx-config` meta element; htmx 2.0.11 with its version in the file name; Alpine.js removed (Stack decision SD-15); template components added to the content layer; sign-out added to the navigation; server integration and automated browser checks documented |
+| 2.0 | 2026-11-04 | Retitled and rewritten for the shell as built into the reference template, rendered once by Go templates. Active navigation by the longest-prefix rule, replacing file-name prefixes and `data-section`; htmx configuration moved to one `htmx-config` meta element; htmx 2.0.11 with its version in the file name; Alpine.js removed (Stack decision SD-15); template components added to the content layer; sign-out added to the navigation; server integration and automated browser checks documented; Section 2 completed as the single inventory of the shell's files |
 
 > **CONFIDENTIAL — Deltra Systems LLC. Internal engineering reference.**
 
@@ -33,12 +33,13 @@ The shell is a progressively enhanced multipage application. Every address is a 
 | `web/templates/layout.html` | The shell, defined once: `<head>` with htmx configuration and scripts; skip link; icon sprite; navigation; global error region; `#main-view`; overlay root; request indicator. A plain layout for signed-out pages |
 | `web/templates/partials/nav.html` | The navigation entries: links, disclosure groups, and sign-out |
 | `web/templates/partials/icons.html` | The SVG icon sprite; each icon is defined once and referenced with `<use>` |
-| `web/templates/pages/*.html` | Page content. Each page fills `#main-view` and has one `<h1>` |
+| `web/templates/partials/pagination.html` | Previous and Next paging for lists, preserving search, filters, and sort |
+| `web/templates/pages/*.html` | Page content. Each page fills `#main-view` and has one `<h1>`; list pages also define a `results` block for htmx partial updates |
 | `web/static/css/style.css` | Tokens, shell layout, navigation, components, device tiers, accessibility |
 | `web/static/js/spa-shell.js` | Sidebar state, disclosure groups, active navigation, global errors, htmx lifecycle |
 | `web/static/vendor/htmx-2.0.11.min.js` | htmx, self-hosted and pinned |
 
-No bundler, package manager, or JavaScript framework is used.
+This table is the single inventory of the shell's files; the template's `web/README.md` points here. No bundler, package manager, or JavaScript framework is used.
 
 ## 3. Architecture
 
