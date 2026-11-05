@@ -9,7 +9,7 @@ and tells you what to read, and when.
 | Document | Version | Governs |
 |---|---|---|
 | [Start Here](Start_Here.md) | 1.1 Approved | Orientation: roles, workflow, the rules never broken, where to find answers, what to read when, the Approver's role, a glossary, and a first-week exercise |
-| [Web-App Development Stack](Web-App_Development_Stack.md) | 2.0 Approved | How every web application is built: stack, layout, security, testing, deployment, agent files |
+| [Web-App Development Stack](Web-App_Development_Stack.md) | 2.1 (Approved) | How every web application is built: stack, layout, security, testing, deployment, agent files |
 | [Software Architecture Document — Web Application Shell](Software_Architecture_Document_Web_Application_Shell.md) | 2.0 Approved | The page shell every application inherits from the reference template |
 | [AI Development and Acceptable Use Policy](deltra-AI-development-and-acceptable-use-policy.md) | 1.1 Approved | AI use at Deltra; Section 26A governs agents as the development workforce |
 | [Source Control, Code Review, and Change Management Standard](deltra-source-control-code-review-and-change-management-standard.md) | 1.1 Approved | How changes flow: reviews, findings, gates, evidence, releases |

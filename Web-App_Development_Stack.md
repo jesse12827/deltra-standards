@@ -5,13 +5,13 @@
 | Attribute | Value |
 |---|---|
 | File name | `Web-App_Development_Stack.md` |
-| Version | 2.0 |
-| Date | 2026-11-03 |
+| Version | 2.1 |
+| Date | 2026-11-05 |
 | Owner | Deltra Systems LLC — Software Development |
 | Scope | Deltra web application development standard. Part A is the mandatory baseline for new applications; Part B governs existing applications. Not a record of any one application's deployed state. |
 | Canonical location | The `deltra-standards` repository holds the master. Each adopting project includes that repository as a Git submodule at `docs/standards/`, pinned to the version in force (Section 6). |
 | Status | Approved |
-| Approved by | Jesse Garcia |
+| Approved by | Jesse Garcia, CEO |
 | Approval date | 2026-11-05 |
 | Release date | 2026-11-05 |
 | Related documents | Deltra AI Development and Acceptable Use Policy (v1.1); Deltra Source Control, Code Review, and Change Management Standard (v1.1); Software Architecture Document — Web Application Shell (v2.0); Deltra Secure Software Development Standard |
@@ -26,6 +26,7 @@
 | 1.7 | 2026-11-02 | Remove project-specific adoption section and named project instruction-file references; permit either OpenAI Codex or Claude Code; generalize deployment and database qualifications; approved for release | Approved by Jesse Garcia, CEO, 2026-11-02 |
 | 1.8 | 2026-11-03 | Approved by Jesse Garcia, CEO 2026-11-05 | Submitted |
 | 2.0 | 2026-11-03 | Full rewrite for the AI software factory. Replaces preferences and options with decisions; adds project layout, architecture, frontend, database, security, configuration, logging, testing, quality gates, build, deployment, environments, and agent-repository requirements; separates the mandatory baseline for new applications (Part A) from the adoption policy for existing applications (Part B); lists standard decisions for Approver confirmation (Appendix A). Revised before approval: all SQL consolidated in `db/` (bootstrap, migrations, queries, scripts) with database documentation in `docs/database/`; single `docs/` tree with the runbook moved to `docs/operations/`; `deploy/` limited to installed files; README required in each top-level directory; synthetic data generator moved to `cmd/synthdata`; Go code confined to `cmd/` and `internal/`. Removed agent session capture (Entire), which was optional in Version 1.7, from the standard. Further revised before approval: added `docs/standards/` for read-only copies of the governing documents (Sections 6 and 19, document record); replaced the single `reviewer.md` with one or more Reviewer Agent definitions named by the application's SRS, and required `CLAUDE.md` to point to Section 6 for the layout, listing only the application's own additions, and to give reviewer instructions (Sections 6 and 18); added a `reviews/` folder to each milestone's evidence package and a file name for each reviewer report (Sections 6 and 18); required sign-off from each Reviewer Agent a change requires (Section 17). Revised again before approval with Approver decisions of 2026-11-04 (Appendix A, SD-11 to SD-17): `docs/standards/` is a Git submodule of `deltra-standards` rather than copies (Sections 6, 13.2, 19); the application shell follows the Software Architecture Document — Web Application Shell, with htmx history caching off, active navigation marked by JavaScript, and the sidebar preference kept in browser storage (Section 8); the shell script is a classic script, other scripts ES modules (Section 8); Alpine.js may be permitted only by ADR, in its CSP build (Section 8); every SRS follows the standard section structure (Section 19); the Section 6 tree is complete and is the single description of the layout (Section 6); new-application conventions added: one name, sibling folders, layout only by copying the template (Section 3); Reviewer Agents are application-neutral, read-only, use a different Claude model from the Builder Agent, and report High, Medium, and Low findings with a PASS, PASS WITH FINDINGS, or FAIL verdict (Section 18) | Pending |
+| 2.1 | 2026-11-05 | Added security rules adopted in the reference template on 2026-11-05: Entra ID identity by tenant and object ID, development sign-in only in Development Mode (10.1); session replacement and audit in one transaction (10.2); `Cache-Control: no-store` (10.6); audit in the same transaction as the change, fail-closed audit, no untrusted values in logs (12) | Approved by Jesse Garcia, CEO, 2026-11-05 |
 
 > **CONFIDENTIAL — Deltra Systems LLC. Internal engineering reference.**
 
@@ -275,8 +276,10 @@ These requirements apply to every new application, in addition to the Deltra Sec
 ### 10.1 Authentication
 
 - **Staff sign-in uses Microsoft Entra ID through OpenID Connect**, either directly or through Deltra's shared Entra ID authentication service.
+- Entra ID users are identified by the tenant ID (`tid`) and object ID (`oid`) claims together, and `tid` must equal the configured tenant. Email address and `preferred_username` are never used to sign anyone in, because directory administrators can change or reassign them. A person can sign in only after an administrator links their tenant ID and object ID to their application user; the link is an audited change.
 - **Local accounts** are used only when the application's SRS requires them. Passwords are hashed with Argon2id using parameters set in the template. Password reset is an administrator-controlled process unless the SRS specifies self-service.
 - Authentication failures are logged as audit events without the submitted password.
+- Development sign-in (for synthetic users) is available only in Development Mode. The application refuses to start with it in any other environment.
 
 ### 10.2 Sessions
 
@@ -284,6 +287,7 @@ These requirements apply to every new application, in addition to the Deltra Sec
 - The session token is 32 bytes from a cryptographically secure random source. The database stores only its SHA-256 hash.
 - The cookie uses the `__Host-` prefix and the `Secure`, `HttpOnly`, and `SameSite=Lax` attributes.
 - The session token is replaced at sign-in. Sign-out deletes the session on the server.
+- At sign-in, any session the browser already holds is deleted. Deleting it, creating the new session, and writing the sign-in audit event happen in one transaction.
 - Default lifetimes are 30 minutes idle and 8 hours absolute, unless the SRS sets other values.
 
 ### 10.3 Authorization
@@ -309,6 +313,7 @@ The application or Nginx sets:
 - `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'`
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: same-origin`
+- `Cache-Control: no-store` on every response except static assets
 - `Strict-Transport-Security` (set by Nginx)
 
 ### 10.7 Errors
@@ -333,7 +338,9 @@ The application or Nginx sets:
 - Logs use the standard library `log/slog` in JSON format, written to standard output and collected by journald.
 - Every log entry for a request carries the request identifier.
 - Logs never contain passwords, session tokens, credentials, or full request bodies.
+- Values from the request URL and from an identity provider's error response are not copied into logs. The log records a fixed message, the HTTP status, or a length-limited error code.
 - **Audit events** are written to an audit table in the application database and to the log. Audit events include sign-in success and failure, authorization denials, user and role administration, and creation, change, and deletion of business records.
+- An audit event is written in the same transaction as the change it records. If the audit write fails, the request fails and the change is not made. A refusal (sign-in denied, access denied) still stands, and the request returns an error.
 - Audit records are never updated or deleted by the application.
 
 ## 13. Testing and quality gates
