@@ -2,7 +2,7 @@
 
 | Attribute | Value |
 |---|---|
-| Version | 1.1 — Draft, pending approval |
+| Version | 1.1 — Approved |
 | Date | 2026-11-04 |
 | Owner | Deltra Systems LLC — Software Development |
 | Audience | Anyone who builds, reviews, or approves Deltra web applications |

@@ -6,13 +6,13 @@
 | **Title**                      | Analogy of a Physical Factory and a Software Factory                  |
 | **Document Type**              | Architecture Document / Design Specification                         |
 | **Version**                    | 1.1                                                                   |
-| **Status**                     | Draft                                                                 |
+| **Status**                     | Approved                                                                 |
 | **Document Owner**             | Deltra Software Engineering                                           |
 | **Approval Authority**         | Chief Executive Officer                                               |
 | **Scope**                      | Deltra Software Engineering                                           |
 | **Applies To**                 | Design, build, and operation of the Deltra Systems software factory, including staff, contractors, and AI agents participating in software production |
 | **Information Classification** | Confidential                                                          |
-| **Effective Date**             | N/A – pending approval                                                |
+| **Effective Date**             | 2026-11-05                                                |
 | **Review Cycle**               | At least annually and upon material change to the software factory design |
 | **Next Review Date**           | N/A – establish upon activation                                       |
 | **Supersedes**                 | Version 1.0                                                           |

@@ -7,7 +7,7 @@
 | Date | 2026-11-04 |
 | Owner | Deltra Systems LLC — Software Development |
 | Scope | The page shell of every Deltra web application: navigation, layout tiers, htmx behavior, and their extension rules |
-| Status | Draft — pending approval |
+| Status | Approved |
 | Governing standard | Web-App Development Stack, Section 8. Where this document and the Stack disagree, the Stack governs. |
 | Implementation | `web/` in `deltra-webapp-template` |
 
