@@ -5,16 +5,16 @@
 | Attribute | Value |
 |---|---|
 | File name | `Web-App_Development_Stack.md` |
-| Version | 2.1 |
-| Date | 2026-11-05 |
+| Version | 2.2 |
+| Date | 2026-11-14 |
 | Owner | Deltra Systems LLC — Software Development |
 | Scope | Deltra web application development standard. Part A is the mandatory baseline for new applications; Part B governs existing applications. Not a record of any one application's deployed state. |
 | Canonical location | The `deltra-standards` repository holds the master. Each adopting project includes that repository as a Git submodule at `docs/standards/`, pinned to the version in force (Section 6). |
 | Status | Approved |
 | Approved by | Jesse Garcia, CEO |
-| Approval date | 2026-11-05 |
-| Release date | 2026-11-05 |
-| Related documents | Deltra AI Development and Acceptable Use Policy (v1.1); Deltra Source Control, Code Review, and Change Management Standard (v1.1); Software Architecture Document — Web Application Shell (v2.0); Deltra Secure Software Development Standard |
+| Approval date | 2026-11-14 |
+| Release date | 2026-11-14 |
+| Related documents | Deltra AI Development and Acceptable Use Policy (v1.1); Deltra Source Control, Code Review, and Change Management Standard (v1.2); Software Architecture Document — Web Application Shell (v2.0); Deltra Secure Software Development Standard |
 
 ## Document History
 
@@ -27,6 +27,7 @@
 | 1.8 | 2026-11-03 | Standardize on Claude Code as the sole AI engineering agent (draft; superseded by 2.0 before approval) | Not submitted |
 | 2.0 | 2026-11-03 | Full rewrite for the AI software factory. Replaces preferences and options with decisions; adds project layout, architecture, frontend, database, security, configuration, logging, testing, quality gates, build, deployment, environments, and agent-repository requirements; separates the mandatory baseline for new applications (Part A) from the adoption policy for existing applications (Part B); lists standard decisions for Approver confirmation (Appendix A). Revised before approval: all SQL consolidated in `db/` (bootstrap, migrations, queries, scripts) with database documentation in `docs/database/`; single `docs/` tree with the runbook moved to `docs/operations/`; `deploy/` limited to installed files; README required in each top-level directory; synthetic data generator moved to `cmd/synthdata`; Go code confined to `cmd/` and `internal/`. Removed agent session capture (Entire), which was optional in Version 1.7, from the standard. Further revised before approval: added `docs/standards/` for read-only copies of the governing documents (Sections 6 and 19, document record); replaced the single `reviewer.md` with one or more Reviewer Agent definitions named by the application's SRS, and required `CLAUDE.md` to point to Section 6 for the layout, listing only the application's own additions, and to give reviewer instructions (Sections 6 and 18); added a `reviews/` folder to each milestone's evidence package and a file name for each reviewer report (Sections 6 and 18); required sign-off from each Reviewer Agent a change requires (Section 17). Revised again before approval with Approver decisions of 2026-11-04 (Appendix A, SD-11 to SD-17): `docs/standards/` is a Git submodule of `deltra-standards` rather than copies (Sections 6, 13.2, 19); the application shell follows the Software Architecture Document — Web Application Shell, with htmx history caching off, active navigation marked by JavaScript, and the sidebar preference kept in browser storage (Section 8); the shell script is a classic script, other scripts ES modules (Section 8); Alpine.js may be permitted only by ADR, in its CSP build (Section 8); every SRS follows the standard section structure (Section 19); the Section 6 tree is complete and is the single description of the layout (Section 6); new-application conventions added: one name, sibling folders, layout only by copying the template (Section 3); Reviewer Agents are application-neutral, read-only, use a different Claude model from the Builder Agent, and report High, Medium, and Low findings with a PASS, PASS WITH FINDINGS, or FAIL verdict (Section 18) | Approved by Jesse Garcia, CEO, 2026-11-05 |
 | 2.1 | 2026-11-05 | Added security rules adopted in the reference template on 2026-11-05: Entra ID identity by tenant and object ID, development sign-in only in Development Mode (10.1); session replacement and audit in one transaction (10.2); `Cache-Control: no-store` (10.6); audit in the same transaction as the change, fail-closed audit, no untrusted values in logs (12) | Approved by Jesse Garcia, CEO, 2026-11-05 |
+| 2.2 | 2026-11-14 | Added Section 15A, production readiness rehearsal (layers, minimum proof, before-real-data restore on a separate machine, records); linked from Section 16; added Section 8 "Forms and saving". From Procurement M6. | Approved by Jesse Garcia, CEO, 2026-11-14 |
 
 > **CONFIDENTIAL — Deltra Systems LLC. Internal engineering reference.**
 
@@ -209,6 +210,12 @@ The application shell — navigation, page layout, device tiers, focus handling,
 - **The sidebar preference is kept in browser storage** (`localStorage`). It is a per-browser convenience; failure to store it is never an error. It is not stored in the database.
 - **Alpine.js is not used** in new applications. Small interactive behavior is written in vanilla JavaScript. If an application genuinely needs rich in-browser state, an ADR approved by the Approver may permit Alpine's CSP build for that application only.
 - **Partial responses:** a handler that returns part of a page for an htmx request sends `Vary: HX-Request`. htmx 2 does not swap error responses, so forms that report validation errors (HTTP 422) are submitted as ordinary forms unless htmx is configured to swap those responses.
+- **Forms and saving.**
+  - A record is edited in **one form**, with **one Save** action. A field is never saved by a button of its own.
+  - Actions that are **events** rather than field changes (adding a note, deleting, sending) have their own buttons, **visually separated** from the form.
+  - A page with **unsaved changes** shows that state. It warns before the changes are lost, whether by leaving the page or by using another action on it.
+  - A successful save is confirmed on screen.
+  - When saving changes a value that has its own history (for example, a status), the server records that history as part of the same save.
 - **CSS:** vanilla CSS with design tokens as custom properties. CSS Grid for page layout. Container queries for components. Media queries only for the page shell and device-level concerns. No CSS framework.
 - **Accessibility:** WCAG 2.2 Level AA is the default target. Every form control has a label. Every function is usable by keyboard. Errors are announced next to the field they concern.
 - **Browsers:** current versions of Microsoft Edge, Google Chrome, Mozilla Firefox, and Safari.
@@ -390,6 +397,45 @@ Changes to the Makefile gate targets, `.golangci.yml`, or CI definitions are Cri
 - The application provides `/healthz`, which reports process health and database connectivity, for monitoring.
 - **Production deployment is performed by the Approver** by following `docs/operations/runbook.md`. Agents prepare the runbook and never deploy.
 
+## 15A. Production readiness rehearsal
+
+Before an application's **first Release Gate**, the Approver rehearses its deployment and operation **on the production host itself**, in its final configuration, and records the results in the release evidence package. The rehearsal proves that the application can be deployed, protected, operated, recovered, and changed safely, before any real data depends on it.
+
+### 15A.1 Conditions
+
+- **Where:** the production host, behind the production edge service and identity provider, with the production offsite backup repository.
+- **Data:** an **empty database**. The only records are those the Approver types during the rehearsal. **No real data** is loaded until the rehearsal has passed.
+- **Who:** the Approver only. Agents never access the production host, its credentials, or its logs. They prepare the plan and runbook, and receive results only (pass or fail, version strings, counts, and `diff` results), never secrets.
+- **Documents:** the runbook is **frozen** during the rehearsal. Every step that does not work as written is recorded as a **finding**, with a priority (P1: caused a failure or an unsafe result; P2: wrong or missing; P3: wording). The runbook is corrected **after** the rehearsal and **before** the Release Gate.
+- **Afterwards:** the database is emptied and re-initialized. Rehearsal bundles, test programs, and pre-deployment dumps containing rehearsal data are removed from the host. The rehearsal's backups contain no real data, and expire under their normal retention.
+
+### 15A.2 Layers and minimum proof
+
+Each layer passes only when its proof has been **produced and observed**, for example a refused request, a log line, or a matching fingerprint. A configuration file that *should* produce the result is not proof.
+
+| Layer | Minimum proof |
+|---|---|
+| **1. Network edge** | From an allowed address, the application answers through the edge service, with the security headers of Section 10.6 and `Cache-Control: no-store` on pages. From a **non-allowed network** (for example, a phone on mobile data), the **edge** refuses the request, and the application never sees it. Plain HTTP is redirected to HTTPS. The page body contains **no script injected** by the edge service. Edge settings apply **only to the application's host name**, unless the Approver approves a zone-wide change. |
+| **2. Host** | The host firewall admits only the intended sources. The reverse proxy refuses requests that do not come through the edge service, and requests for unknown host names (never `200`). The access log records the **real client address**, the **edge address**, and **no query strings**. The **sign-in rate limit** produces `429`, counted **per real visitor** (shown in the log), not per edge server or per proxy. **No build tools** (compilers, Go) are installed on the host. |
+| **3. Identity** | An **assigned, linked, active** user signs in, and is shown with the correct role. An **unassigned** user is refused **by the identity provider**. An **unlinked** user is refused **by the application**. A **deactivated** user is refused. Each refusal is in the audit log. The first administrator is linked to the **user's** object identifier, not the application's. The client secret on the host is proven to match the identity provider's **current** secret, by length and prefix compared on screen. |
+| **4. Application** | On the production host: the core workflow is exercised (for example, create a record, change its status, add and edit a note), and each change appears in the audit log, with times in the business time zone. |
+| **5. Data protection** | The **scheduled backup units** complete successfully to **every** repository. The offsite copy is **encrypted**, and its objects show **immutable retention** (for example, Object Lock in Compliance mode) with the expected retain-until date. A **restore from the offsite copy** into an isolated instance is **identical** to the source, by per-table row counts and content fingerprints. The encryption passphrase in the password vault is proven to match the host's, by length and fingerprint, without being displayed. |
+| **6. Operations** | **Induced failures** (the application stopped, then the database stopped) each produce an **alert**, and the health check reports the failure (`503` for the database). Each alert clears on recovery. Logs persist across a reboot, with the configured retention. |
+| **7. Change** | A **second build** is deployed by the runbook, including its pre-deployment database dump (proven readable) and a check of which installed files changed. The application is then **rolled back** to the previous release, and continues to serve signed-in users. The build toolchain has **no known vulnerabilities** (`make check` passes). |
+| **8. Performance** | The application's performance acceptance test, run **on the production hardware** with the volume dataset, meets the SRS's response-time requirements. |
+
+### 15A.3 Before real data
+
+Before the first real data is loaded, the Approver also restores the newest offsite backup **onto a separate machine**, using **only** the credentials held in the password vault. This proves recovery from the **loss of the production host**. It is repeated yearly.
+
+### 15A.4 Records
+
+The release evidence package records, for each layer, the result, the evidence (outputs, log lines, counts), and the findings, each with how it was resolved. The reference template shall provide a rehearsal plan skeleton covering these layers. Each application's release-readiness milestone starts from it.
+
+### 15A.5 Later releases
+
+Later releases do not repeat the full rehearsal. They follow the runbook's deployment and smoke tests. The full rehearsal is repeated when the production **host, edge service, identity provider, or backup design changes**.
+
 ## 16. Environments
 
 | Environment | Who works in it | Data | Purpose |
@@ -397,6 +443,8 @@ Changes to the Makefile gate targets, `.golangci.yml`, or CI definitions are Cri
 | Development | Builder and Reviewer Agents | Synthetic only | Building and automated testing; databases are disposable |
 | Acceptance | Approver | Synthetic only | Approver acceptance testing of a release candidate |
 | Production | Approver only | Real | Live operation |
+
+A new application's Production environment is first used **empty**, for the production readiness rehearsal (Section 15A). Real data is loaded only after the rehearsal has passed and the Release Gate is approved.
 
 Rehearsal of a real-data migration, such as importing records from an existing application, is Production Mode work. The Approver performs it in an isolated environment that agents cannot access.
 

@@ -14,8 +14,8 @@
 
 **Document Owner:** Engineering Technical Lead (role vacant; responsibilities held by the Approver — see Section 39)  
 **Approval Authority:** Chief Executive Officer / Executive Product Architect  
-**Status:** Draft  
-**Version:** 1.1
+**Status:** Approved  
+**Version:** 1.2
 
 # 1. Purpose
 
@@ -2087,14 +2087,16 @@ Promotion to production requires that no decision within the released scope rema
 **Acceptance Gate**
 
 - *Receive:* the milestone's evidence package, `docs/evidence/<milestone>/evidence.md`, and its `reviews/` folder (Section 134B).
-- *Check:* continuous integration passed on the milestone's final commit; every Reviewer Agent verdict is PASS or PASS WITH FINDINGS, and every High and Medium finding is resolved or recorded under Section 43; the traceability matrix shows a test for each requirement; you have performed each Approver test yourself, following its instructions; you have read each Assumed decision and the agent's recommendation.
+- *Check:* continuous integration passed on the milestone's work before your decision (the final commit, which records your decision, must also pass before the merge; see Record); every Reviewer Agent verdict is PASS or PASS WITH FINDINGS, and every High and Medium finding is resolved or recorded under Section 43; the traceability matrix shows a test for each requirement; you have performed each Approver test yourself, following its instructions; you have read each Assumed decision and the agent's recommendation.
 - *Decide:* each Assumed decision is Ratified, Changed, or Rejected; the milestone is Accepted, Accepted with rework, or Rejected.
 - *Record:* the "Approver decision" section of the evidence package; the new status of each decision in the decision log; each rework item as a new work item. Changed decisions are folded into the next SRS version.
 
+  Under Single-Approver Operation, the Approver records the decision in the evidence package **as the last commit on the branch, before pushing it for the Pull Request**, after the Approver's tests and the decision log are complete. The decision states that it is **subject to continuous integration passing on the Pull Request**. If continuous integration passes, the Pull Request is merged, and the record is complete at the moment of the merge. If it fails, the Pull Request is not merged until it passes. A changed or withdrawn decision is recorded by a further commit before the merge. In a repository without continuous integration, such as `deltra-standards`, the decision is still the last commit before the push, and the Pull Request is merged after the Approver has reviewed it.
+
 **Release Gate**
 
-- *Receive:* the release evidence: release notes, the release candidate's version and checksum, the deployment runbook, the rollback or recovery plan, and any migration scripts you will run (Section 134B).
-- *Check:* every milestone in the release has been accepted; no decision in the released scope is Assumed or Open; the deployment preconditions of Sections 82 and 136 are met; a verified backup exists; you can follow the runbook on your own.
+- *Receive:* the release evidence: release notes, the release candidate's version and checksum, the deployment runbook, the rollback or recovery plan, and any migration scripts you will run, and, for an application's first release, the production readiness rehearsal results (Section 134B).
+- *Check:* every milestone in the release has been accepted; no decision in the released scope is Assumed or Open; the deployment preconditions of Sections 82 and 136 are met; a verified backup exists; for an application's first release, the **production readiness rehearsal** (Web-App Development Stack Section 15A) has passed on the production host, its findings are resolved or recorded, and its runbook corrections are made; you can follow the runbook on your own.
 - *Decide:* approve the release, or hold it.
 - *Record:* the release approval in the evidence package; the release tag on the approved commit of `main` (Section 68); after deployment, the deployment record (Section 83).
 
@@ -2116,7 +2118,7 @@ The evidence package shall contain:
 - **Limitations:** anything the agents could not do, were uncertain about, or chose to defer; and
 - **Identification:** commit hashes and release-candidate version.
 
-For the Release Gate, the evidence package shall also include the deployment runbook, the rollback or recovery plan, and any migration scripts the Approver will run.
+For the Release Gate, the evidence package shall also include the deployment runbook, the rollback or recovery plan, and any migration scripts the Approver will run, and, for an application's first release, the **production readiness rehearsal results**, layer by layer (Web-App Development Stack Section 15A).
 
 The evidence package shall be stored in the repository or release record and retained under Section 127.
 
@@ -2151,6 +2153,18 @@ There are no long-lived development or production branches. `main` and its relea
 4. **Push the branch at least once per work session**, and whenever it is ready for review. Pushing is the off-machine backup, and it runs continuous integration. Never push to `main`.
 5. **Merge only through the Pull Request on GitHub**, after the preconditions of Section 48 are met, using squash merge (Section 47). Never merge locally into `main` and push.
 6. **After the merge**, update the local `main` and delete the finished branch.
+
+## Finishing a milestone or rework item
+
+Under Single-Approver Operation, the Approver's decision is the last commit on the branch (Section 134A, Acceptance Gate, *Record*):
+
+1. Approver tests, decision-log ratifications, and the Reviewer Agent reports are committed.
+2. The Approver commits the decision ("…subject to CI passing").
+3. Push, and open the Pull Request.
+4. Continuous integration passes.
+5. Squash-merge, and delete the branch.
+
+The check at the gate is unchanged: no merge without continuous integration passing on the final commit.
 
 ## The command cycle
 
@@ -2329,3 +2343,4 @@ The governing source-control and change-management principle of Deltra Software 
 |---------|-----------------|--------|-----------------------------------------------------------------------------|
 | 1.0     | August 19, 2026 | Draft  | Initial Deltra Source Control, Code Review, and Change Management Standard. |
 | 1.1     | November 3, 2026 | Draft | Replaced Section 39 (Founding-Team Exception) with Single-Approver Operation and its compensating controls. Added a Single-Approver column to Section 44. Added the Single-Approver workflow to Section 134 and new Sections 134A (Milestone Gates) and 134B (Evidence Package). Updated Sections 2, 30, 35, 37, 48, 59, 60, 82, 110, 128, 133, 136, and 138 for AI agents and the Approver role. Assigned the vacant Engineering Technical Lead responsibilities to the Approver. Removed drafting commentary following the document history. Revised before approval on 2026-11-04: one finding vocabulary for human and agent review, High, Medium, and Low with a PASS, PASS WITH FINDINGS, or FAIL verdict (Sections 42 and 43); several Reviewer Agents and a definition of sign-off (Sections 35, 37, 39, 44, 48, 128, 134, 134B); `docs/standards/` changes made Critical (Section 44); squash merge made the standard merge method (Section 47); Approver checklists added for each gate (Section 134A); new Section 134C, Daily Git Workflow. |
+| 1.2     | November 14, 2026 | Approved by Jesse Garcia, CEO | Release Gate and evidence package require the production readiness rehearsal for an application's first release (Sections 134A, 134B). Under Single-Approver Operation, the Approver's decision is the branch's last commit before the Pull Request, subject to continuous integration passing (Sections 134A, 134C); the Acceptance Gate check reworded to match, and a repository without continuous integration merges after the Approver's review (Section 134A). |
