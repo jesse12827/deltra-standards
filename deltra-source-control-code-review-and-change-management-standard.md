@@ -14,7 +14,7 @@
 
 **Document Owner:** Engineering Technical Lead (role vacant; responsibilities held by the Approver — see Section 39)  
 **Approval Authority:** Chief Executive Officer / Executive Product Architect  
-**Status:** Draft  
+**Status:** Approved  
 **Version:** 1.2
 
 # 1. Purpose
@@ -2343,4 +2343,4 @@ The governing source-control and change-management principle of Deltra Software 
 |---------|-----------------|--------|-----------------------------------------------------------------------------|
 | 1.0     | August 19, 2026 | Draft  | Initial Deltra Source Control, Code Review, and Change Management Standard. |
 | 1.1     | November 3, 2026 | Draft | Replaced Section 39 (Founding-Team Exception) with Single-Approver Operation and its compensating controls. Added a Single-Approver column to Section 44. Added the Single-Approver workflow to Section 134 and new Sections 134A (Milestone Gates) and 134B (Evidence Package). Updated Sections 2, 30, 35, 37, 48, 59, 60, 82, 110, 128, 133, 136, and 138 for AI agents and the Approver role. Assigned the vacant Engineering Technical Lead responsibilities to the Approver. Removed drafting commentary following the document history. Revised before approval on 2026-11-04: one finding vocabulary for human and agent review, High, Medium, and Low with a PASS, PASS WITH FINDINGS, or FAIL verdict (Sections 42 and 43); several Reviewer Agents and a definition of sign-off (Sections 35, 37, 39, 44, 48, 128, 134, 134B); `docs/standards/` changes made Critical (Section 44); squash merge made the standard merge method (Section 47); Approver checklists added for each gate (Section 134A); new Section 134C, Daily Git Workflow. |
-| 1.2     | November 14, 2026 | Draft | Release Gate and evidence package require the production readiness rehearsal for an application's first release (Sections 134A, 134B). Under Single-Approver Operation, the Approver's decision is the branch's last commit before the Pull Request, subject to continuous integration passing (Sections 134A, 134C); the Acceptance Gate check reworded to match, and a repository without continuous integration merges after the Approver's review (Section 134A). |
+| 1.2     | November 14, 2026 | Approved by Jesse Garcia, CEO | Release Gate and evidence package require the production readiness rehearsal for an application's first release (Sections 134A, 134B). Under Single-Approver Operation, the Approver's decision is the branch's last commit before the Pull Request, subject to continuous integration passing (Sections 134A, 134C); the Acceptance Gate check reworded to match, and a repository without continuous integration merges after the Approver's review (Section 134A). |
